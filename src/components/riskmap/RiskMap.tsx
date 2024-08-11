@@ -166,7 +166,7 @@ const RiskMap = ({ title, filePath, opacityLevel, weight, zoom }: RiskMapProps) 
         'accidentsSourceHeatmapAll',
     ];
     const dataLayers = ['accidentsLayerPoint', 'accidentsLayerSegment'];
-    const heatMapLayers = ['accidentsHeatmapLeft', 'accidentsHeatmapRight', 'accidentsSourceHeatmapAll'];
+    const heatMapLayers = ['accidentsHeatmapLeft', 'accidentsHeatmapRight', 'accidentsHeatmapAll'];
 
     useEffect(() => {
         if (!map) return;
@@ -257,30 +257,31 @@ const RiskMap = ({ title, filePath, opacityLevel, weight, zoom }: RiskMapProps) 
     useEffect(() => {
         if (!validMapLayers(allLayers)) return;
 
-        // Set visibility for heatmap layers based on selectedDirections
-        if (selectedDirections.includes('L')) {
-            map!.setLayoutProperty('accidentsHeatmapLeft', 'visibility', 'visible');
-        } else {
-            map!.setLayoutProperty('accidentsHeatmapLeft', 'visibility', 'none');
-        }
+        const heatmapVisibilitySettings = {
+            L: 'accidentsHeatmapLeft',
+            R: 'accidentsHeatmapRight',
+            Both: 'accidentsHeatmapAll',
+        };
 
-        if (selectedDirections.includes('R')) {
-            map!.setLayoutProperty('accidentsHeatmapRight', 'visibility', 'visible');
-        } else {
-            map!.setLayoutProperty('accidentsHeatmapRight', 'visibility', 'none');
-        }
+        let isAnyHeatmapVisible = false;
+
+        Object.entries(heatmapVisibilitySettings).forEach(([direction, layer]) => {
+            const isVisible = selectedDirections.includes(direction);
+
+            map!.setLayoutProperty(layer, 'visibility', isVisible ? 'visible' : 'none');
+            if (isVisible) isAnyHeatmapVisible = true;
+        });
+
+        setHeatmapVisible(isAnyHeatmapVisible);
 
         if (selectedDirections.includes('Both')) {
-            map!.setLayoutProperty('accidentsHeatmapAll', 'visibility', 'visible');
             dataLayers.forEach((layer) => {
                 map!.setFilter(layer, null); // Remove any existing filters
             });
         } else {
-            map!.setLayoutProperty('accidentsHeatmapAll', 'visibility', 'none');
-            // Filter points based on selectedDirections
-            dataLayers.forEach((layer) =>
-                map!.setFilter(layer, ['in', ['get', 'zijde'], ['literal', selectedDirections]]),
-            );
+            dataLayers.forEach((layer) => {
+                map!.setFilter(layer, ['in', ['get', 'zijde'], ['literal', selectedDirections]]);
+            });
         }
     }, [geoJSONDataHeatmap, selectedDirections]);
 
@@ -300,7 +301,7 @@ const RiskMap = ({ title, filePath, opacityLevel, weight, zoom }: RiskMapProps) 
     }, [pointsVisible]);
 
     useEffect(() => {
-        if (!validMapLayers(['accidentsHeatmapAll'])) return;
+        if (!validMapLayers(heatMapLayers)) return;
         const setSelectedDirVisbility = (visible: string) => {
             selectedDirections.forEach((direction) => {
                 switch (direction) {
@@ -321,7 +322,7 @@ const RiskMap = ({ title, filePath, opacityLevel, weight, zoom }: RiskMapProps) 
         } else {
             setSelectedDirVisbility('none');
         }
-    }, [heatmapVisible]);
+    }, [map, heatmapVisible]);
 
     /**
      * Hook for displaying the filtered data on the map.

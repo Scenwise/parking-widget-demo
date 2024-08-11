@@ -2,6 +2,9 @@ export const heatmapLayer = (id: string, source: string, opacity_level_start: nu
     id: id,
     type: 'heatmap',
     source: source,
+    layout: {
+        visibility: 'none',
+    },
     paint: {
         // All points have the same weight (equal importance)
         'heatmap-weight': weight,

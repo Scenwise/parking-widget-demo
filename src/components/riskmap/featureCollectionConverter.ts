@@ -32,6 +32,17 @@ export const pointCoordinates = (data: AccidentData) => {
     return [data.Longitude_van, data.Latitude_van] as LngLatLike;
 };
 
+/**
+ * An helper method to keep the direction of the incidents to use the same format (L or R)
+ */
+const convertDirection = (data: AccidentData) => {
+    let diretion = data.Zijde;
+    if (diretion === 'Li') diretion = 'L';
+    else if (diretion === 'Re') diretion = 'R';
+
+    return diretion;
+};
+
 const convertToFeature = (data: AccidentData, segment: string) => {
     const coordinates = segment === 'LineString' ? segmentCoordinates(data) : pointCoordinates(data);
     const feature = {
@@ -46,7 +57,7 @@ const convertToFeature = (data: AccidentData, segment: string) => {
             weg: data.Weg,
             hmp_van: data['Hmp van'],
             hmp_tot: data['Hmp tot'],
-            zijde: data.Zijde,
+            zijde: convertDirection(data),
             starttijd: data.Starttijd,
             eindtijd: data.Eindtijd,
             startdatum: data.Startdatum,
